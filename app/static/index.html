@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>InfluenceMap</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; }
+
+    header {
+      padding: 24px 40px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1.6rem; color: #fff; }
+    header p { font-size: 0.85rem; color: #888; margin-top: 4px; }
+
+    .stats {
+      display: flex;
+      gap: 20px;
+      padding: 24px 40px;
+      background: #141414;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .stat-card {
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 16px 24px;
+      min-width: 180px;
+    }
+    .stat-card .label { font-size: 0.75rem; color: #888; text-transform: uppercase; }
+    .stat-card .value { font-size: 1.6rem; font-weight: 700; color: #fff; margin-top: 4px; }
+
+    .main { display: flex; gap: 0; }
+
+    .sidebar {
+      width: 260px;
+      min-height: calc(100vh - 140px);
+      background: #141414;
+      border-right: 1px solid #2a2a2a;
+      padding: 24px 20px;
+      flex-shrink: 0;
+    }
+    .sidebar h3 { font-size: 0.85rem; color: #888; text-transform: uppercase; margin-bottom: 20px; }
+
+    .filter-group { margin-bottom: 20px; }
+    .filter-group label { font-size: 0.8rem; color: #aaa; display: block; margin-bottom: 6px; }
+    .filter-group input {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #fff;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .filter-group input:focus { border-color: #555; }
+
+    .apply-btn {
+      width: 100%;
+      padding: 10px;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .apply-btn:hover { background: #ddd; }
+
+    .content { flex: 1; padding: 24px 32px; overflow-x: auto; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .toolbar h2 { font-size: 1rem; color: #ccc; }
+
+    .export-btn {
+      padding: 8px 16px;
+      background: #1e1e1e;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .export-btn:hover { background: #2a2a2a; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead tr { background: #1a1a1a; }
+    thead th {
+      padding: 12px 14px;
+      text-align: left;
+      color: #888;
+      font-weight: 500;
+      border-bottom: 1px solid #2a2a2a;
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #1e1e1e; transition: background 0.15s; }
+    tbody tr:hover { background: #1a1a1a; }
+    tbody td { padding: 12px 14px; color: #ddd; }
+
+    .score-badge {
+      background: #2a2a2a;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-weight: 600;
+      color: #fff;
+      font-size: 0.8rem;
+    }
+    .profile-link {
+      color: #7eb8f7;
+      text-decoration: none;
+      font-size: 0.8rem;
+    }
+    .profile-link:hover { text-decoration: underline; }
+
+    .loading { color: #555; text-align: center; padding: 60px; }
+    .empty { color: #555; text-align: center; padding: 60px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📊 InfluenceMap</h1>
+    <p>B2B Micro-Influencer Lead Generator for Marketing Agencies</p>
+  </div>
+</header>
+
+<div class="stats" id="stats">
+  <div class="stat-card"><div class="label">Total Influencers</div><div class="value" id="stat-influencers">—</div></div>
+  <div class="stat-card"><div class="label">Posts Scraped</div><div class="value" id="stat-posts">—</div></div>
+  <div class="stat-card"><div class="label">Last Updated</div><div class="value" id="stat-updated" style="font-size:0.95rem;margin-top:8px;">—</div></div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <h3>🔍 Filters</h3>
+    <div class="filter-group">
+      <label>Min Engagement Score</label>
+      <input type="number" id="min-engagement" value="0" min="0" />
+    </div>
+    <div class="filter-group">
+      <label>Min Posts in Dataset</label>
+      <input type="number" id="min-posts" value="1" min="1" />
+    </div>
+    <div class="filter-group">
+      <label>Niche Keyword</label>
+      <input type="text" id="niche" placeholder="e.g. pune, food, cafe" />
+    </div>
+    
+    <button class="apply-btn" onclick="loadInfluencers()">Apply Filters</button>
+  </div>
+  <div style="margin-top: 32px; border-top: 1px solid #2a2a2a; padding-top: 24px;">
+    <h3 style="font-size:0.85rem;color:#888;text-transform:uppercase;margin-bottom:16px;">
+      ➕ Scrape New Niche
+    </h3>
+    <div class="filter-group">
+      <label>Hashtag (without #)</label>
+      <input type="text" id="new-hashtag" placeholder="e.g. fitnessindia" />
+    </div>
+    <button class="apply-btn" style="background:#222;color:#fff;border:1px solid #444;" onclick="scrapeNiche()">
+      🔍 Scrape & Add
+    </button>
+    <p id="scrape-msg" style="font-size:0.75rem;color:#888;margin-top:10px;"></p>
+  </div>
+
+  <div class="content">
+    <div class="toolbar">
+      <h2 id="result-count">Loading...</h2>
+      <button class="export-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Posts</th>
+          <th>Avg Likes</th>
+          <th>Avg Comments</th>
+          <th>Engagement Score</th>
+          <th>Niches</th>
+          <th>Profile</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="9" class="loading">Loading influencers...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+    let currentData = [];
+  
+    async function loadStats() {
+      const res = await fetch("/api/stats");
+      const data = await res.json();
+      document.getElementById("stat-influencers").textContent = data.total_influencers;
+      document.getElementById("stat-posts").textContent = data.total_posts;
+      document.getElementById("stat-updated").textContent = data.last_updated?.slice(0, 16) || "Never";
+    }
+  
+    async function loadInfluencers() {
+      const minEng = document.getElementById("min-engagement").value || 0;
+      const minPosts = document.getElementById("min-posts").value || 1;
+      const niche = document.getElementById("niche").value || "";
+      const url = `/api/influencers?min_engagement=${minEng}&min_posts=${minPosts}&niche=${encodeURIComponent(niche)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      currentData = data.influencers;
+      document.getElementById("result-count").textContent = `🎯 ${data.count} Influencers Found`;
+      const tbody = document.getElementById("table-body");
+      if (data.count === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty">No influencers match your filters.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.influencers.map((inf, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>@${inf.owner_username}</strong></td>
+          <td>${inf.owner_full_name || "—"}</td>
+          <td>${inf.total_posts}</td>
+          <td>${inf.avg_likes}</td>
+          <td>${inf.avg_comments}</td>
+          <td><span class="score-badge">${inf.engagement_score}</span></td>
+          <td style="font-size:0.75rem;color:#888;">${(inf.niches || "").slice(0, 40)}</td>
+          <td><a class="profile-link" href="${inf.profile_url}" target="_blank">View ↗</a></td>
+        </tr>
+      `).join("");
+    }
+  
+    function exportCSV() {
+      if (!currentData.length) return;
+      const headers = Object.keys(currentData[0]).join(",");
+      const rows = currentData.map(r => Object.values(r).map(v => `"${v}"`).join(",")).join("\n");
+      const blob = new Blob([headers + "\n" + rows], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "influencemap_leads.csv";
+      a.click();
+    }
+  
+    async function scrapeNiche() {
+      const tag = document.getElementById("new-hashtag").value.trim();
+      if (!tag) {
+        alert("Please enter a hashtag first.");
+        return;
+      }
+      document.getElementById("scrape-msg").textContent = `Scraping #${tag}... please wait ~30s`;
+      try {
+        const res = await fetch(`/api/scrape?hashtag=${encodeURIComponent(tag)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          document.getElementById("scrape-msg").textContent = `Error: ${err}`;
+          return;
+        }
+        const data = await res.json();
+        document.getElementById("scrape-msg").textContent = data.message;
+        setTimeout(() => { loadStats(); loadInfluencers(); }, 35000);
+      } catch (err) {
+        document.getElementById("scrape-msg").textContent = `Request failed: ${err.message}`;
+        console.error(err);
+      }
+    }
+  
+    loadStats();
+    loadInfluencers();
+  </script>
+</body>
+</html>
