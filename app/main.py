@@ -101,7 +101,13 @@ import pandas as pd
 def scrape_niche(background_tasks: BackgroundTasks, hashtag: str = Query(..., description="Hashtag to scrape")):
     def pipeline(tag: str):
         print(f"[API] Scraping #{tag}...")
-        raw = run_scraper([tag], max_results=50)
+    # Combine user query with pune prefix for local relevance
+        local_variants = [
+            tag,
+            f"pune{tag}",
+            f"{tag}pune",
+        ]
+        raw = run_scraper(local_variants, max_results=30)
         if raw:
             df = clean(pd.DataFrame(raw))
             insert_posts(df.to_dict(orient="records"))
