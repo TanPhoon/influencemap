@@ -5,28 +5,52 @@ import pandas as pd
 
 RAW_DATA_PATH = "data/raw"
 
-LOCATION_KEYWORDS = [
+EXCLUDE_KEYWORDS = [
+    "moscow", "london", "paris", "berlin", "tokyo", "seoul", "beijing",
+    "new york", "sydney", "dubai", "singapore", "bangkok", "jakarta",
+    "chile", "brazil", "mexico", "spain", "italy", "france", "germany",
+    "russia", "china", "japan", "korea", "australia", "canada", "usa",
+    "america", "turkey", "egypt", "nigeria", "kenya", "ghana"
+]
+
+INCLUDE_KEYWORDS = [
     "pune", "india", "mumbai", "delhi", "bangalore", "bengaluru",
     "hyderabad", "nashik", "kolhapur", "nagpur", "pcmc", "pimpri",
     "shivajinagar", "koregaon", "baner", "hinjewadi", "kothrud",
-    "viman nagar", "wakad", "fc road", "mg road", "indian", "desi",
-    "maharashtra", "marathi"
+    "viman nagar", "wakad", "fc road", "mg road", "maharashtra",
+    "marathi", "desi", "indian", "bharat", "swiggy", "zomato",
+    "instapur", "instapune", "puneri", "punekar"
 ]
 
 def filter_local(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Filter out posts with no India/Pune location signal.
-    Checks caption text and hashtags for location keywords.
-    Decision: drop posts with zero location signals to keep
-    dataset relevant for Indian marketing agencies.
+    Two-pass location filter:
+    Pass 1 — Keep posts that have explicit India/Pune signals (strong include)
+    Pass 2 — From remaining, drop posts with explicit foreign signals
+    Decision: union approach so English-caption Indian posts aren't lost
     """
-    def has_local_signal(row):
+    def has_include_signal(row):
         text = f"{row.get('caption', '')} {row.get('hashtags', '')}".lower()
-        return any(keyword in text for keyword in LOCATION_KEYWORDS)
+        return any(kw in text for kw in INCLUDE_KEYWORDS)
+
+    def has_exclude_signal(row):
+        text = f"{row.get('caption', '')} {row.get('hashtags', '')}".lower()
+        return any(kw in text for kw in EXCLUDE_KEYWORDS)
 
     before = len(df)
-    df = df[df.apply(has_local_signal, axis=1)]
+
+    # Posts with explicit India signal — always keep
+    india_posts = df[df.apply(has_include_signal, axis=1)]
+
+    # Posts with no signal either way — keep if no foreign signal
+    neutral_posts = df[
+        ~df.apply(has_include_signal, axis=1) &
+        ~df.apply(has_exclude_signal, axis=1)
+    ]
+
+    df = pd.concat([india_posts, neutral_posts]).drop_duplicates(subset=["id"])
     after = len(df)
+
     print(f"[Cleaner] Location filter: {before} → {after} records ({before - after} removed)")
     return df
 
