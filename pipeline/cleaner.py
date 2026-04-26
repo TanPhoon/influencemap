@@ -5,6 +5,31 @@ import pandas as pd
 
 RAW_DATA_PATH = "data/raw"
 
+LOCATION_KEYWORDS = [
+    "pune", "india", "mumbai", "delhi", "bangalore", "bengaluru",
+    "hyderabad", "nashik", "kolhapur", "nagpur", "pcmc", "pimpri",
+    "shivajinagar", "koregaon", "baner", "hinjewadi", "kothrud",
+    "viman nagar", "wakad", "fc road", "mg road", "indian", "desi",
+    "maharashtra", "marathi"
+]
+
+def filter_local(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter out posts with no India/Pune location signal.
+    Checks caption text and hashtags for location keywords.
+    Decision: drop posts with zero location signals to keep
+    dataset relevant for Indian marketing agencies.
+    """
+    def has_local_signal(row):
+        text = f"{row.get('caption', '')} {row.get('hashtags', '')}".lower()
+        return any(keyword in text for keyword in LOCATION_KEYWORDS)
+
+    before = len(df)
+    df = df[df.apply(has_local_signal, axis=1)]
+    after = len(df)
+    print(f"[Cleaner] Location filter: {before} → {after} records ({before - after} removed)")
+    return df
+
 def load_latest_raw(hashtag: str = None) -> pd.DataFrame:
     """
     Load the most recent raw JSON file.
@@ -72,12 +97,16 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     # Decision: keep first occurrence if duplicates exist across scrape runs
     df = df.drop_duplicates(subset=["id"], keep="first")
 
-    # 9. Strip whitespace from string fields
+   # 9. Strip whitespace from string fields
     df["ownerUsername"] = df["ownerUsername"].str.strip().str.lower()
     df["caption"] = df["caption"].str.strip()
 
+    # 10. Filter to local/India-relevant posts only
+    df = filter_local(df)
+
     print(f"[Cleaner] Cleaned {len(df)} records.")
     return df
+    
 
 
 def load_and_clean(hashtag: str = None) -> pd.DataFrame:

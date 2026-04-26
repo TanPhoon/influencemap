@@ -6,7 +6,7 @@
   <title>InfluenceMap</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #000000; color: #ffffff; }
 
     header {
       padding: 24px 40px;
@@ -172,7 +172,7 @@
       <input type="text" id="new-hashtag" placeholder="e.g. fitnessindia" />
     </div>
     <button class="apply-btn" style="background:#222;color:#fff;border:1px solid #444;" onclick="scrapeNiche()">
-      🔍 Scrape & Add
+       Scrape & Add
     </button>
     <p id="scrape-msg" style="font-size:0.75rem;color:#888;margin-top:10px;"></p>
   </div>
@@ -180,7 +180,7 @@
   <div class="content">
     <div class="toolbar">
       <h2 id="result-count">Loading...</h2>
-      <button class="export-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+      <button class="export-btn" onclick="exportCSV()"> Export CSV</button>
     </div>
     <table>
       <thead>
