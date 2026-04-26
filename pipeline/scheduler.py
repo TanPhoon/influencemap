@@ -4,16 +4,9 @@ from scraper.apify_instagram import run_scraper
 from pipeline.cleaner import load_and_clean
 from pipeline.scorer import score_influencers
 from pipeline.db import init_db, insert_posts, aggregate_influencers
-
+from scraper.apify_instagram import run_scraper, DEFAULT_HASHTAGS
 # Hashtags to scrape — expand this list for more niches
-HASHTAGS = [
-    "punefood",
-    "foodblogger",
-    "punefoodies",
-    "punecafe",
-    "punerestaurant"
-]
-
+HASHTAGS = DEFAULT_HASHTAGS
 MAX_RESULTS_PER_TAG = 50
 
 
